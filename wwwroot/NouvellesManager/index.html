@@ -79,7 +79,7 @@
         <script src="js/date.js"></script>
         <script src="js/api.js"></script>
         <script defer>
-            const periodicRefreshPeriod = 10;
+            const periodicRefreshPeriod = 1;
             let holdCheckETag = false;
             let currentETag = "";
             let createMode = true;
@@ -89,8 +89,8 @@
             let nouvelleIdToDelete = 0; // used by confirmDeleteDlg
             let selectedCategory = "";
             let previousScrollPosition = 0;
-            let offset = 0;
-            let limit = 5;
+            let refresh = false
+            let CompteurNouvelles = 5;
 
             //Refreshes the page in an interval of time.
             init_UI();
@@ -104,10 +104,10 @@
                 }
             }
 
-            function getNouvellesList() {
+            function getNouvellesList(rafraichissement = true) {
                 function prepareQueryString() {
 
-                    let get_Some = `&offset=${offset}&limit=${limit}`;
+                    let get_Some =  rafraichissement ? `&offset=${0}&limit=${CompteurNouvelles}}`: `&offset=${CompteurNouvelles++}&limit=${1}}`;
                     let queryString = "?sort=Date,desc"+get_Some;
                     if (!hideSearchBar) {
                         selectedCategory = $("#searchCategory").val();
@@ -119,6 +119,7 @@
                     }
                     return queryString;
                 }
+                refresh = !rafraichissement
                 GET_ALL(refreshNouvellesList, error, prepareQueryString());
                 GET_ALL(refreshCategoryList, error, "?fields=Category");
             }
@@ -131,7 +132,8 @@
                     $("#searchCategory").append(`<option value='${category}' ${selected}>${category}</option>`);
                 }
             }
-            function refreshNouvellesList(nouvelles, ETag) {
+            function refreshNouvellesList(nouvelles, ETag) 
+            {
                 function makeFavicon(url) {
                     let link = $(`<a href='${url}' target='_blank'></a>`)
                     link.append($(`<img class='favicon' src="https://www.google.com/s2/favicons?domain=${url}&sz=48">`));
@@ -159,11 +161,14 @@
                 currentETag = ETag;
                 
              
-
-               // $("#nouvellesList").empty();
+                if(!refresh){
+                    $("#nouvellesList").empty();
+                }
                 let currentCategory = "";
-                for (let nouvelle of nouvelles) {
+                if(nouvelles){
+                    for (let nouvelle of nouvelles) {
                     insertIntoNouvelleList(nouvelle);
+                }
                 }
                 $(".editCmd").click(e => { editNouvelle(e) });
                 $(".deleteCmd").click(e => { deleteNouvelle(e) });
@@ -172,10 +177,7 @@
 
             $(".scrollContainer").scroll(function () {
                 if (($(".scrollContainer").scrollTop() + $(".scrollContainer").innerHeight() >= $("#nouvellesList").height())) {
-                    offset++;
-                    getNouvellesList()
-                    previousScrollPosition = $(".scrollContainer").scrollTop() 
-                    console.log("test")
+                    getNouvellesList(false);
                 }
             });
 
